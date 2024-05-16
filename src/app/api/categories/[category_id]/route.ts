@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { productSchema } from "@/utils/types/products";
+import { CategorySchema, categorySchema } from "@/utils/types/categories";
 
 export async function GET(request: NextRequest) {
   return NextResponse.json({ message: "Success Get", data: [] });
@@ -9,26 +9,16 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     // TODO: Protect this endpoint (admin only)
-    const formData = await request.formData();
+    const { name } = (await request.json()) as CategorySchema;
 
-    const name = formData.get("name") as string;
-    const description = formData.get("description") as string;
-    const price = formData.get("price") as string;
-    const image = formData.get("image") as File;
-    const category_id = formData.get("category_id") as string;
-
-    const validatedFields = productSchema.safeParse({
+    const validatedFields = categorySchema.safeParse({
       name,
-      description,
-      price,
-      image: image ?? undefined,
-      category_id,
     });
 
     if (!validatedFields.success) {
       return NextResponse.json(
         {
-          message: "Edit product failed, please check your input again",
+          message: "Edit category failed, please check your input again",
           data: null,
           reason: validatedFields.error.flatten().fieldErrors,
         },
@@ -41,16 +31,16 @@ export async function PUT(request: NextRequest) {
     if (false) {
       return NextResponse.json(
         {
-          message: "Edit product failed, data not found",
+          message: "Edit category failed, data not found",
           reason:
-            "The product you're trying to update might not have been created yet",
+            "The category you're trying to update might not have been created yet",
         },
         { status: 404 }
       );
     }
 
     return NextResponse.json({
-      message: "Successfully edited product",
+      message: "Successfully edited category",
       data: [],
       reason: null,
     });
@@ -59,7 +49,7 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json(
       {
-        message: "Edit product failed, please try again later",
+        message: "Edit category failed, please try again later",
         data: null,
         reason: (error as Error).message,
       },
@@ -77,16 +67,16 @@ export async function DELETE(request: NextRequest) {
     if (false) {
       return NextResponse.json(
         {
-          message: "Delete product failed, data not found",
+          message: "Delete category failed, data not found",
           reason:
-            "The product you're trying to delete might not have been created yet",
+            "The category you're trying to delete might not have been created yet",
         },
         { status: 404 }
       );
     }
 
     return NextResponse.json({
-      message: "Successfully deleted product",
+      message: "Successfully deleted category",
       data: [],
       reason: null,
     });
@@ -95,7 +85,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json(
       {
-        message: "Delete product failed, please try again later",
+        message: "Delete category failed, please try again later",
         data: null,
         reason: (error as Error).message,
       },

@@ -28,7 +28,7 @@ export async function PUT(request: NextRequest) {
     if (!validatedFields.success) {
       return NextResponse.json(
         {
-          message: "Edit product failed, please check your input again",
+          message: "Edit transaction failed, please check your input again",
           data: null,
           reason: validatedFields.error.flatten().fieldErrors,
         },
@@ -41,16 +41,16 @@ export async function PUT(request: NextRequest) {
     if (false) {
       return NextResponse.json(
         {
-          message: "Edit product failed, data not found",
+          message: "Edit transaction failed, data not found",
           reason:
-            "The product you're trying to update might not have been created yet",
+            "The transaction you're trying to update might not have been created yet",
         },
         { status: 404 }
       );
     }
 
     return NextResponse.json({
-      message: "Successfully edited product",
+      message: "Successfully edited transaction",
       data: [],
       reason: null,
     });
@@ -59,43 +59,7 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json(
       {
-        message: "Edit product failed, please try again later",
-        data: null,
-        reason: (error as Error).message,
-      },
-      { status: 500 }
-    );
-  }
-}
-
-export async function DELETE(request: NextRequest) {
-  try {
-    // TODO: Protect this endpoint (admin only)
-
-    // TODO: Delete record by id on database
-
-    if (false) {
-      return NextResponse.json(
-        {
-          message: "Delete product failed, data not found",
-          reason:
-            "The product you're trying to delete might not have been created yet",
-        },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({
-      message: "Successfully deleted product",
-      data: [],
-      reason: null,
-    });
-  } catch (error) {
-    console.error(error);
-
-    return NextResponse.json(
-      {
-        message: "Delete product failed, please try again later",
+        message: "Edit transaction failed, please try again later",
         data: null,
         reason: (error as Error).message,
       },
