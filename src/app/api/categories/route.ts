@@ -9,7 +9,11 @@ export async function GET(request: NextRequest) {
       cacheStrategy: { ttl: 60 },
     });
 
-    return NextResponse.json({ message: "Successfully get categories", data });
+    return NextResponse.json({
+      message: "Successfully get categories",
+      data,
+      reason: null,
+    });
   } catch (error) {
     console.error(error);
 

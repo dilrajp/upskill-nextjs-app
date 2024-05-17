@@ -34,6 +34,7 @@ export async function GET(request: NextRequest, context: Params) {
     return NextResponse.json({
       message: "Successfully get category",
       data,
+      reason: null,
     });
   } catch (error) {
     console.error(error);
@@ -51,9 +52,9 @@ export async function GET(request: NextRequest, context: Params) {
 
 export async function PUT(request: NextRequest, context: Params) {
   try {
-    const { category_id } = context.params;
-
     // TODO: Protect this endpoint (admin only)
+
+    const { category_id } = context.params;
     const { name } = (await request.json()) as CategorySchema;
 
     const validatedFields = categorySchema.safeParse({
@@ -112,8 +113,9 @@ export async function PUT(request: NextRequest, context: Params) {
 
 export async function DELETE(request: NextRequest, context: Params) {
   try {
-    const { category_id } = context.params;
     // TODO: Protect this endpoint (admin only)
+
+    const { category_id } = context.params;
 
     const data = await nullIfError(prisma.category.delete)({
       where: {

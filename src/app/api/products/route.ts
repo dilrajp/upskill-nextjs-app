@@ -1,13 +1,46 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { productSchema } from "@/utils/types/products";
+import { prisma } from "@/utils/configs/db";
 
 export async function GET(request: NextRequest) {
-  // TODO: Create reusable function to handle query params
-  const searchParams = request.nextUrl.searchParams;
+  try {
+    const data = await prisma.product.findMany({
+      include: {
+        category: {
+          select: {
+            name: true,
+          },
+        },
+      },
+      orderBy: {
+        created_at: "desc",
+      },
+      cacheStrategy: { ttl: 60 },
+    });
 
-  console.log(searchParams.get("page"));
-  return NextResponse.json({ message: "Success Get", data: [] });
+    const totalCount = await prisma.product.count();
+    const totalPages = Math.ceil(totalCount / 10);
+
+    return NextResponse.json({
+      message: "Successfully get products",
+      metadata: {
+        totalCount,
+        totalPages,
+      },
+      data,
+    });
+  } catch (error) {
+    console.log(error);
+
+    return NextResponse.json(
+      {
+        message: "Get products failed, please try again later",
+        reason: (error as Error).message,
+      },
+      { status: 500 }
+    );
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -46,12 +79,20 @@ export async function POST(request: NextRequest) {
       // TODO: Upload image to cloudinary
     }
 
-    // TODO: Create new record on database
+    const data = await prisma.product.create({
+      data: {
+        name,
+        description,
+        price,
+        image: imageUrl,
+        category_id: +category_id!,
+      },
+    });
 
     return NextResponse.json(
       {
         message: "Successfully added product to database",
-        data: [],
+        data,
         reason: null,
       },
       { status: 201 }

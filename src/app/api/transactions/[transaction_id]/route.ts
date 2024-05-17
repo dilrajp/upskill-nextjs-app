@@ -1,66 +1,110 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 
-import { productSchema } from "@/utils/types/products";
+import { OrderSchema, orderSchema } from "@/utils/types/transactions";
+import { prisma } from "@/utils/configs/db";
 
-export async function GET(request: NextRequest) {
-  return NextResponse.json({ message: "Success Get", data: [] });
+interface Params {
+  params: { transaction_id: string };
 }
 
-export async function PUT(request: NextRequest) {
+export async function GET(request: NextRequest, context: Params) {
   try {
     // TODO: Protect this endpoint (admin only)
-    const formData = await request.formData();
+    const { transaction_id } = context.params;
 
-    const name = formData.get("name") as string;
-    const description = formData.get("description") as string;
-    const price = formData.get("price") as string;
-    const image = formData.get("image") as File;
-    const category_id = formData.get("category_id") as string;
+    const data = await prisma.transaction.findUnique({
+      where: {
+        id: transaction_id,
+      },
+      include: {
+        user: {
+          select: {
+            email: true,
+            name: true,
+            address: true,
+          },
+        },
+        order: {
+          select: {
+            id: true,
+            total: true,
+            status: true,
+            items: {
+              select: {
+                id: true,
+                quantity: true,
+                price: true,
+                product: {
+                  select: {
+                    id: true,
+                    name: true,
+                    image: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      cacheStrategy: { ttl: 60 },
+    });
 
-    const validatedFields = productSchema.safeParse({
-      name,
-      description,
-      price,
-      image: image ?? undefined,
-      category_id,
+    return NextResponse.json({
+      message: "Successfully get transaction",
+      data,
+    });
+  } catch (error) {
+    console.log(error);
+
+    return NextResponse.json(
+      {
+        message: "Get transaction failed, please try again later",
+        reason: (error as Error).message,
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(request: NextRequest, context: Params) {
+  try {
+    // TODO: Protect this endpoint (admin only)
+    const { status } = (await request.json()) as OrderSchema;
+    const { transaction_id } = context.params;
+
+    const validatedFields = orderSchema.safeParse({
+      status,
     });
 
     if (!validatedFields.success) {
       return NextResponse.json(
         {
-          message: "Edit transaction failed, please check your input again",
-          data: null,
+          message: "Transaction failed, please check your input again",
           reason: validatedFields.error.flatten().fieldErrors,
         },
         { status: 400 }
       );
     }
 
-    // TODO: Edit record on database
-
-    if (false) {
-      return NextResponse.json(
-        {
-          message: "Edit transaction failed, data not found",
-          reason:
-            "The transaction you're trying to update might not have been created yet",
-        },
-        { status: 404 }
-      );
-    }
+    const data = await prisma.order.update({
+      where: {
+        transaction_id: transaction_id,
+      },
+      data: {
+        status,
+      },
+    });
 
     return NextResponse.json({
-      message: "Successfully edited transaction",
-      data: [],
-      reason: null,
+      message: "Successfully update transaction",
+      data,
     });
   } catch (error) {
-    console.error(error);
+    console.log(error);
 
     return NextResponse.json(
       {
-        message: "Edit transaction failed, please try again later",
-        data: null,
+        message: "Update transaction failed, please try again later",
         reason: (error as Error).message,
       },
       { status: 500 }

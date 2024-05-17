@@ -1,39 +1,56 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { productSchema } from "@/utils/types/products";
+import {
+  TransactionSchema,
+  transactionSchema,
+} from "@/utils/types/transactions";
+import { prisma } from "@/utils/configs/db";
 
-export async function GET(request: NextRequest) {
-  // TODO: Create reusable function to handle query params
-  const searchParams = request.nextUrl.searchParams;
+export const POST = async (request: NextRequest) => {
+  let transactionId = "";
 
-  console.log(searchParams.get("page"));
-  return NextResponse.json({ message: "Success Get", data: [] });
-}
-
-export async function POST(request: NextRequest) {
   try {
-    // TODO: Protect this endpoint (admin only)
+    const { amount, cart_id } = (await request.json()) as TransactionSchema;
 
-    // TODO: Handle transaction using midtrans
+    const validatedFields = transactionSchema.safeParse({
+      amount,
+      cart_id,
+    });
 
-    return NextResponse.json(
-      {
-        message: "Successfully check out",
-        data: [],
-        reason: null,
-      },
-      { status: 201 }
-    );
+    if (!validatedFields.success) {
+      return NextResponse.json(
+        {
+          message: "Transaction failed, please check your input again",
+          reason: validatedFields.error.flatten().fieldErrors,
+        },
+        { status: 400 }
+      );
+    }
+
+    // TODO: Create transaction
+
+    return NextResponse.json({
+      message: "Successfully check out",
+      data: null,
+    });
   } catch (error) {
-    console.error(error);
+    console.log(error);
+
+    const deleteOrder = prisma.order.delete({
+      where: { transaction_id: transactionId },
+    });
+    const deleteTransaction = prisma.transaction.delete({
+      where: { id: transactionId },
+    });
+
+    await prisma.$transaction([deleteOrder, deleteTransaction]);
 
     return NextResponse.json(
       {
         message: "Create transaction failed, please try again later",
-        data: null,
         reason: (error as Error).message,
       },
       { status: 500 }
     );
   }
-}
+};
