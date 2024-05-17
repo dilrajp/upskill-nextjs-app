@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { productSchema } from "@/utils/types/products";
 import { prisma } from "@/utils/configs/db";
-import { nullIfError } from "@/utils/functions";
+import { fileUploader, nullIfError } from "@/utils/functions";
 
 interface Params {
   params: { product_id: string };
@@ -103,7 +103,10 @@ export async function PUT(request: NextRequest, { params }: Params) {
     };
 
     if (image) {
-      // TODO: Upload image to cloudinary
+      const uploadFile = await fileUploader(image, {
+        folder: "hipotesa-product",
+      });
+      dataToUpdate.image = uploadFile.data;
     }
 
     const data = await nullIfError(prisma.product.update)({

@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { productSchema } from "@/utils/types/products";
+import { fileUploader, isNoAuth } from "@/utils/functions";
 import { prisma } from "@/utils/configs/db";
+import { auth } from "@/auth";
 
 export async function GET(request: NextRequest) {
   try {
@@ -43,9 +45,18 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
+export const POST = auth(async function POST(request) {
   try {
-    // TODO: Protect this endpoint (admin only)
+    if (isNoAuth(request.auth)) {
+      return NextResponse.json(
+        {
+          message: "You need to signin to access this endpoint",
+          data: null,
+          reason: "Not authenticated",
+        },
+        { status: 401 }
+      );
+    }
 
     const formData = await request.formData();
 
@@ -76,7 +87,10 @@ export async function POST(request: NextRequest) {
 
     let imageUrl = null;
     if (image) {
-      // TODO: Upload image to cloudinary
+      const uploadFile = await fileUploader(image, {
+        folder: "hipotesa-product",
+      });
+      imageUrl = uploadFile.data;
     }
 
     const data = await prisma.product.create({
@@ -109,4 +123,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
