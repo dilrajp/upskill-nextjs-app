@@ -1,14 +1,24 @@
 import { NextResponse, NextRequest } from "next/server";
 
 import { CartSchema, cartSchema } from "@/utils/types/carts";
+import { isNoAuth } from "@/utils/functions";
 import { prisma } from "@/utils/configs/db";
+import { auth } from "@/auth";
 
-export const POST = async (request: NextRequest) => {
+export const POST = auth(async (request) => {
   try {
-    // TODO: Protect this endpoint
+    if (isNoAuth(request.auth)) {
+      return NextResponse.json(
+        {
+          message: "You need to signin to access this endpoint",
+          reason: "Not authenticated",
+        },
+        { status: 401 }
+      );
+    }
 
     const { product_id, quantity } = (await request.json()) as CartSchema;
-    const userId = ""; // TODO: Get user ID from auth
+    const userId = request.auth?.user?.id!;
 
     const validatedFields = cartSchema.safeParse({
       product_id,
@@ -63,19 +73,27 @@ export const POST = async (request: NextRequest) => {
       { status: 500 }
     );
   }
-};
+});
 
-export const GET = async (request: NextRequest) => {
+export const GET = auth(async (request) => {
   try {
-    // TODO: Protect this endpoint
+    if (isNoAuth(request.auth)) {
+      return NextResponse.json(
+        {
+          message: "You need to signin to access this endpoint",
+          reason: "Not authenticated",
+        },
+        { status: 401 }
+      );
+    }
 
     const data = await prisma.cart.upsert({
       where: {
-        user_id: "", // TODO: Get user ID from auth
+        user_id: request.auth?.user?.id!,
       },
       update: {},
       create: {
-        user_id: "", // TODO: Get user ID from auth
+        user_id: request.auth?.user?.id!,
       },
       include: {
         cart_items: {
@@ -107,4 +125,4 @@ export const GET = async (request: NextRequest) => {
       { status: 500 }
     );
   }
-};
+});

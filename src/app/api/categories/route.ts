@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { CategorySchema, categorySchema } from "@/utils/types/categories";
+import { isNoAuth } from "@/utils/functions";
 import { prisma } from "@/utils/configs/db";
+import { auth } from "@/auth";
 
 export async function GET(request: NextRequest) {
   try {
@@ -28,9 +30,19 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
+export const POST = auth(async function POST(request) {
   try {
-    // TODO: Protect this endpoint (admin only)
+    if (isNoAuth(request.auth, true)) {
+      return NextResponse.json(
+        {
+          message: "You need to signin to access this endpoint",
+          data: null,
+          reason: "Not authenticated",
+        },
+        { status: 401 }
+      );
+    }
+
     const { name } = (await request.json()) as CategorySchema;
 
     const validatedFields = categorySchema.safeParse({
@@ -74,4 +86,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
